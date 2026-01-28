@@ -2,8 +2,8 @@ import axios from 'axios';
 
 const api = '54028889-2cc77c36b1263169d392db777';
 
-const getImagesByQuery = query => {
-  return axios({
+const getImagesByQuery = async (query, page) => {
+  const queryResult = await axios({
     method: 'get',
     baseURL: 'https://pixabay.com/',
     url: 'api/',
@@ -13,10 +13,12 @@ const getImagesByQuery = query => {
       safesearch: true,
       key: api,
       q: query,
+      per_page: 15,
+      page: page,
     },
-  }).then(res => {
-    return res.data;
   });
+
+  return queryResult.data;
 };
 
 export default getImagesByQuery;

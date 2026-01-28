@@ -7,10 +7,49 @@ import {
   clearGallery,
   showLoader,
   hideLoader,
+  showLoadMoreButton,
+  hideLoadMoreButton,
 } from './js/render-functions';
 
 const form = document.querySelector('.form');
 hideLoader();
+
+let page = 1;
+let searchQuery = null;
+
+const loadMoreBtn = document.querySelector('.js-more-btn');
+const loadMoreHandler = async evt => {
+  page += 1;
+  showLoader();
+
+  try {
+    const posts = await getImagesByQuery(searchQuery, page);
+    createGallery(posts.hits);
+
+    const galleryItm = document.querySelector('.gallery-item');
+
+    const rect = galleryItm.getBoundingClientRect();
+    const itmHeight = rect.height;
+    window.scrollBy({
+      top: itmHeight * 2,
+      behavior: 'smooth',
+    });
+
+    const totalPages = page * 15;
+    if (totalPages >= posts.totalHits) {
+      throw new Error('');
+    }
+  } catch {
+    iziToast.error({
+      title: 'Error',
+      position: 'topRight',
+      message: "We're sorry, but you've reached the end of search results.",
+    });
+    hideLoadMoreButton();
+  } finally {
+    hideLoader();
+  }
+};
 
 const submitHandler = evt => {
   evt.preventDefault();
@@ -21,10 +60,13 @@ const submitHandler = evt => {
     return;
   }
 
+  searchQuery = userRequest;
+
   clearGallery();
+  page = 1;
   showLoader();
 
-  getImagesByQuery(userRequest)
+  getImagesByQuery(searchQuery, page)
     .then(data => {
       if (data.hits.length === 0) {
         iziToast.error({
@@ -36,6 +78,7 @@ const submitHandler = evt => {
         return;
       }
       createGallery(data.hits);
+      showLoadMoreButton();
     })
     .catch(err => {
       iziToast.error({ message: 'Server error or connection lost' });
@@ -47,3 +90,4 @@ const submitHandler = evt => {
 };
 
 form.addEventListener('submit', submitHandler);
+loadMoreBtn.addEventListener('click', loadMoreHandler);

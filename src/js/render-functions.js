@@ -53,7 +53,7 @@ export const createGallery = images => {
     )
     .join('');
 
-  galleryList.innerHTML = galleryMarkup;
+  galleryList.insertAdjacentHTML('beforeend', galleryMarkup);
 
   modal.refresh();
 };
@@ -71,4 +71,13 @@ export const showLoader = () => {
 
 export const hideLoader = () => {
   loader.style.display = 'none';
+};
+
+const loadMoreBtn = document.querySelector('.js-more-btn');
+export const showLoadMoreButton = () => {
+  loadMoreBtn.style.display = 'inline-block';
+};
+
+export const hideLoadMoreButton = () => {
+  loadMoreBtn.style.display = 'none';
 };
