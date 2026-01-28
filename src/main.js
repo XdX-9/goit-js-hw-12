@@ -79,6 +79,15 @@ const submitHandler = evt => {
       }
       createGallery(data.hits);
       showLoadMoreButton();
+
+      // const galleryItm = document.querySelector('.gallery-item');
+
+      // const rect = galleryItm.getBoundingClientRect();
+      // const itmHeight = rect.height;
+      // window.scrollBy({
+      //   top: itmHeight * 2,
+      //   behavior: 'smooth',
+      // });
     })
     .catch(err => {
       iziToast.error({ message: 'Server error or connection lost' });
