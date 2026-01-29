@@ -21,6 +21,7 @@ const loadMoreBtn = document.querySelector('.js-more-btn');
 const loadMoreHandler = async evt => {
   page += 1;
   showLoader();
+  hideLoadMoreButton();
 
   try {
     const posts = await getImagesByQuery(searchQuery, page);
@@ -28,30 +29,35 @@ const loadMoreHandler = async evt => {
 
     const galleryItm = document.querySelector('.gallery-item');
 
-    const rect = galleryItm.getBoundingClientRect();
-    const itmHeight = rect.height;
-    window.scrollBy({
-      top: itmHeight * 2,
-      behavior: 'smooth',
-    });
+    if (galleryItm) {
+      const rect = galleryItm.getBoundingClientRect();
+      const itmHeight = rect.height;
+      window.scrollBy({
+        top: itmHeight * 2,
+        behavior: 'smooth',
+      });
+    }
 
     const totalPages = page * 15;
+
     if (totalPages >= posts.totalHits) {
-      throw new Error('');
+      iziToast.info({
+        title: 'Error',
+        position: 'topRight',
+        message: "We're sorry, but you've reached the end of search results.",
+      });
+      hideLoadMoreButton();
+    } else {
+      showLoadMoreButton();
     }
   } catch {
-    iziToast.error({
-      title: 'Error',
-      position: 'topRight',
-      message: "We're sorry, but you've reached the end of search results.",
-    });
-    hideLoadMoreButton();
+    iziToast.error({ message: 'Server error or connection lost' });
   } finally {
     hideLoader();
   }
 };
 
-const submitHandler = evt => {
+const submitHandler = async evt => {
   evt.preventDefault();
 
   let userRequest = document.querySelector('.js-search-field').value.trim();
@@ -63,39 +69,34 @@ const submitHandler = evt => {
   searchQuery = userRequest;
 
   clearGallery();
+  hideLoadMoreButton();
+
   page = 1;
   showLoader();
 
-  getImagesByQuery(searchQuery, page)
-    .then(data => {
-      if (data.hits.length === 0) {
-        iziToast.error({
-          title: 'Error',
-          position: 'topRight',
-          message:
-            'Sorry, there are no images matching your search query. Please try again!',
-        });
-        return;
-      }
-      createGallery(data.hits);
+  try {
+    const queryResult = await getImagesByQuery(searchQuery, page);
+
+    if (queryResult.hits.length === 0) {
+      iziToast.error({
+        title: 'Error',
+        position: 'topRight',
+        message:
+          'Sorry, there are no images matching your search query. Please try again!',
+      });
+      return;
+    }
+    createGallery(queryResult.hits);
+
+    if (queryResult.totalHits > 15) {
       showLoadMoreButton();
-
-      // const galleryItm = document.querySelector('.gallery-item');
-
-      // const rect = galleryItm.getBoundingClientRect();
-      // const itmHeight = rect.height;
-      // window.scrollBy({
-      //   top: itmHeight * 2,
-      //   behavior: 'smooth',
-      // });
-    })
-    .catch(err => {
-      iziToast.error({ message: 'Server error or connection lost' });
-    })
-    .finally(() => {
-      hideLoader();
-      form.reset();
-    });
+    }
+  } catch {
+    iziToast.error({ message: 'Server error or connection lost' });
+  } finally {
+    hideLoader();
+    form.reset();
+  }
 };
 
 form.addEventListener('submit', submitHandler);
